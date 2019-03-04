@@ -259,7 +259,7 @@
          # Code Output
          (for *Statement *Program
             (cond
-               ((== ': (car *Statement)) (label (cdr *Statement)))
+               ((== ': (car *Statement)) (label (cdr *Statement) T))
                ((; (car *Statement) asm) (apply @ (cdr *Statement)))
                (T (quit "Instruction not implemented" (car *Statement))) ) ) ) ) )
 

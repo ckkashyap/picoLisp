@@ -15,7 +15,7 @@
 
 # Directives
 (de label (Lbl Flg)
-   (and Flg (prinl "   global  " Lbl))
+   (and Flg (prinl "\n   global  " Lbl))
    (prinl Lbl ':) )
 
 (asm word (N)
@@ -34,6 +34,6 @@
    (prinst ".ascii" (pack "\"" Str "\"")) )
 
 (asm asciz (Str)
-   (prinst ".asciz" (pack "\"" Str "\"")) )
+   (prinst "db" (pack "\"" Str "\", 0")) )
 
 # vi:et:ts=3:sw=3
