@@ -161,7 +161,8 @@
                            ((and
                                  (== ': (car X))
                                  (or
-                                    (= `(char ".") (char (cdr X)))
+                                    #(= `(char ".") (char (cdr X)))
+                                    (pre? "label_" (cdr X))
                                     (format (last (split (chop (cdr X)) "_"))) ) )
                               (cdr X) )
                            ((and
@@ -280,9 +281,9 @@
                   (== ': (caar L))
                   (== ': (caadr L))
                   (cond
-                     ((= `(char ".") (char (setq L1 (cdar L))))
+                     ((pre? "label_"  (setq L1 (cdar L)))
                         (setq L2 (cdadr L)) )
-                     ((= `(char ".") (char (setq L1 (cdadr L))))
+                     ((pre? "label_"  (setq L1 (cdadr L)))
                         (setq L2 (cdar L)) ) ) ) )
             *Program )
          (setq *Program
@@ -299,7 +300,7 @@
             '((L)
                (and
                   (== ': (car (setq L1 (car L))))
-                  (= `(char ".") (char (cdr L1)))
+                  (pre? "label_" (cdr L1))
                   (== 'jmp (car (setq L2 (cadr L)))) ) )
             *Program )
          (setq *Program
@@ -506,7 +507,7 @@
       (quit "Bad condition" Sym) ) )
 
 (de flowLabel ()
-   (pack "." (inc (0))) )
+   (pack "label_" (inc (0))) )
 
 (asm if (Sym)
    (flowCondition Sym (push '*IfStack (flowLabel)) T) )

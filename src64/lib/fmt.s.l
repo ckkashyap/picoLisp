@@ -15,7 +15,7 @@
 
 # Directives
 (de label (Lbl Flg)
-   (and Flg (prinl "   .globl  " Lbl))
+   (and Flg (prinl "   global  " Lbl))
    (prinl Lbl ':) )
 
 (asm word (N)
