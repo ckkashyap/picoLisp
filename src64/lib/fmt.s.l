@@ -31,7 +31,7 @@
    (prinst ".short" (glue ", " (mapcar hex Lst))) )
 
 (asm ascii (Str)
-   (prinst ".ascii" (pack "\"" Str "\"")) )
+   (prinst "db" (glue "," (mapcar char (chop Str))) ) )
 
 (asm asciz (Str)
    (prinst "db" (pack "\"" Str "\", 0")) )

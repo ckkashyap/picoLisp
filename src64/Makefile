@@ -175,6 +175,9 @@ emu.base.o: sysdefs emu.base.c
 	$(CC) -c -O -fpic -fomit-frame-pointer -D_FILE_OFFSET_BITS=64 $*.c
 
 ### Translate ###
+nsm:
+	./mkAsm $(ARCH) "$(SYS)" $(FMT) $(OS) base "" $(lib)/map  $(baseFiles) sys/$(ARCH)$(SYS).code.l
+
 $(ARCH)$(SYS).base$(FMT): arch/$(ARCH).l defs.l $(baseFiles) sys/$(ARCH)$(SYS).code.l
 	./mkAsm $(ARCH) "$(SYS)" $(FMT) $(OS) base "" $(lib)/map  $(baseFiles) sys/$(ARCH)$(SYS).code.l
 
