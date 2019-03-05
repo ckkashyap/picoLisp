@@ -965,7 +965,7 @@
       (prinst "mov" "rdx" "rbx")  # E
       (prinst "mov" "rsi" "rdx")  # C
       (prinst "mov" "rdi" "rax")  # A
-      (prinst "jmp" "*r10")        # Return
+      (prinst "jmp" "r10")        # Return
       (prinl)
       (label "return")
       (prinst "pop" "rbx")
