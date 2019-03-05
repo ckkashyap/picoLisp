@@ -1,0 +1,7 @@
+lib/ext
+lib/ht
+*.o
+bin/picolisp
+*.ext.s
+*.ht.s
+extra.nasm
