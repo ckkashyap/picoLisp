@@ -19,16 +19,16 @@
    (prinl Lbl ':) )
 
 (asm word (N)
-   (prinst ".quad" N) )
+   (prinst "dq" N) )
 
 (asm byte (N)
-   (prinst ".byte" N) )
+   (prinst "db" N) )
 
 (asm bytes (Lst)
-   (prinst ".byte" (glue ", " Lst)) )
+   (prinst "db" (glue ", " Lst)) )
 
 (asm hx2 (Lst)
-   (prinst ".short" (glue ", " (mapcar hex Lst))) )
+   (prinst "dw" (glue ", " (mapcar hex Lst))) )
 
 (asm ascii (Str)
    (prinst "db" (glue "," (mapcar char (chop Str))) ) )
