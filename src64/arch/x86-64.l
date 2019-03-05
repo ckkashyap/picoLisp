@@ -978,8 +978,8 @@
 (asm initMain ()
    (prinst "xor" "r12" "r12")  # Init NULL register
    (prinst "mov" "[rsi]" "r13")  # Get command in X
-   (prinst "lea" "[rsi+8]" "r14")  # argument vector in Y
-   (prinst "lea" "-8(%rsi,%rdi,8)" "%r15") )  # pointer to last argument in Z
+   (prinst "lea" "r14" "[rsi+8]")  # argument vector in Y
+   (prinst "lea" "r15" "[rsi+rdi*8-8]") )  # pointer to last argument in Z
 
 (asm initLib ())
 
