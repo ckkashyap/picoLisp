@@ -185,7 +185,7 @@ $(bin)/ssl: ssl.c
 	$(STRIP) $(bin)/ssl$(exe)
 
 $(bin)/httpGate: httpGate.c
-	$(CC) -o $(bin)/httpGate$(exe) httpGate.c -lssl -lcrypto
+	$(CC) -o $(bin)/httpGate$(exe) $(USE_IPV4) httpGate.c -lssl -lcrypto
 	$(STRIP) $(bin)/httpGate$(exe)
 
 

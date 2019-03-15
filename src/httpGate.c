@@ -221,6 +221,39 @@ static bool setDH(SSL_CTX *ctx) {
    return YES;
 }
 
+#ifdef USE_IPV4
+
+static int gatePort(int port) {
+   int n, sd;
+   struct sockaddr_in addr;
+
+   if ((sd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+      exit(1);
+   memset(&addr, 0, sizeof(addr));
+   addr.sin_family = AF_INET;
+   addr.sin_addr.s_addr = htonl(INADDR_ANY);
+   addr.sin_port = htons((unsigned short)port);
+   n = 1,  setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &n, sizeof(n));
+   if (bind(sd, (struct sockaddr*)&addr, sizeof(addr)) < 0)
+      exit(1);
+   if (listen(sd,5) < 0)
+      exit(1);
+   return sd;
+}
+
+static int gateConnect(unsigned short port, name *np) {
+   int sd;
+   struct sockaddr_in addr;
+
+   if ((sd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+      exit(1);
+   memset(&addr, 0, sizeof(addr));
+   addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+   addr.sin_family = AF_INET;
+   addr.sin_port = htons(port);
+   return connect(sd, (struct sockaddr*)&addr, sizeof(addr)) < 0? -1 : sd;
+}
+#else
 static int gatePort(unsigned short port) {
    int sd, n;
    struct sockaddr_in6 addr;
@@ -308,7 +341,7 @@ static int gateConnect(int port, name *np) {
    }
    return -1;
 }
-
+#endif
 
 static pid_t Buddy;
 
