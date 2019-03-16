@@ -251,7 +251,59 @@ static int gateConnect(unsigned short port, name *np) {
    addr.sin_addr.s_addr = inet_addr("127.0.0.1");
    addr.sin_family = AF_INET;
    addr.sin_port = htons(port);
-   return connect(sd, (struct sockaddr*)&addr, sizeof(addr)) < 0? -1 : sd;
+   if (connect(sd, (struct sockaddr*)&addr, sizeof(addr)) >= 0)
+      return sd;
+
+   if (!np) return -1;
+
+   int fd;
+   pid_t pid;
+
+   if (np->log) {
+      struct flock fl;
+      char log[strlen(np->dir) + 1 + strlen(np->log) + 1];
+
+      if (np->log[0] == '/')
+         strcat(log, np->log);
+      else
+         sprintf(log, "%s/%s", np->dir, np->log);
+      if ((fd = open(log, O_RDWR)) >= 0) {
+         fl.l_type = F_WRLCK;
+         fl.l_whence = SEEK_SET;
+         fl.l_start = 0;
+         fl.l_len = 0;
+         if (fcntl(fd, F_SETLK, &fl) < 0) {
+            if (errno != EACCES  &&  errno != EAGAIN  ||
+                        fcntl(fd, F_SETLKW, &fl) < 0  ||
+                        connect(sd, (struct sockaddr*)&addr, sizeof(addr)) < 0)
+               return -1;
+            close(fd);
+            return sd;
+         }
+      }
+   }
+   if ((pid = fork()) == 0) {
+      if (setgid(np->gid) == 0 && setuid(np->uid) == 0 && chdir(np->dir) == 0) {
+         setpgid(0,0);
+         if (np->log)
+            freopen(np->log, "a", stdout);
+         dup2(STDOUT_FILENO, STDERR_FILENO);
+         execve(np->av[0], np->av, np->ev);
+         exit(1);
+      }
+   }
+   if (pid > 0) {
+      setpgid(pid,0);
+      int i = 200;
+      do {
+         usleep(100000);  // 100 ms
+         if (connect(sd, (struct sockaddr*)&addr, sizeof(addr)) >= 0) {
+            if (np->log  &&  fd >= 0)
+               close(fd);
+            return sd;
+         }
+      } while (--i);
+   }
 }
 #else
 static int gatePort(unsigned short port) {
