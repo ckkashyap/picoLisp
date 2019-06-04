@@ -1,3 +1,348 @@
+04jun19
+   Pass current field to 'msg' in '+DstButton' and '+obj'
+      lib/db.l
+      lib/form.l
+
+03jun19
+   Mark horizontal scroll position with "M", use in <enter> for next line
+      lib/vip.l
+
+01jun19
+   Keep horizontal position in buffer switches
+      lib/vip.l
+
+30may19
+   Add 'GUI' and 'Config' to locals
+      lib/android.l
+
+25may19
+   "See also" 'asoq' -> 'get'
+      doc/refA.html
+   Handle long path names in 'status'
+      lib/vip.l
+
+24may19
+   Zero 'ext' in callbacks
+      lib/android.l
+
+21may19
+   Return to 4 pipes in Java RPC protocol
+      lib/android.l
+
+20may19
+   Typo in 'idForm'
+      lib/form.l
+
+17may19
+   Set up 'InFrame' in parser functions
+      {src64,pilos/src}/io.l
+      src/io.c
+
+13may19
+   'rc' stores multiple key/value pairs
+      lib.l
+      doc/refR.html
+      test/lib.l
+   Minor fix
+      doc/refD.html
+
+09may19
+   Tune horizontal positioning in 'goto'
+      lib/vip.l
+
+07may19
+   Handle long path names in 'status'
+      lib/vip.l
+   'onDone' function
+      lib/form.l
+
+04may19
+   Removed 'terminate', added 'restart' function
+      lib/android.l
+
+03may19
+   Pass flags to PendingIntent
+   Prevent 'wake' under-lock
+      lib/android.l
+   Arrows scroll only by single column
+      lib/vip.l
+
+30apr19
+   Keep count argument to 'fmt' in buffer
+      lib/vip.l
+
+29apr19
+   Optional count argument to 'fmt' in F4
+   Scroll right to longer line below current line
+   <enter> goes to beginning of next line
+   "Dirty" indicator " * "
+      lib/vip.l
+
+28apr19
+   "Dirty" indicator "*" instead of "[+]"
+   Scroll right continued in longer line
+      lib/vip.l
+
+27apr19
+   Change 'hunspell' spell checker fron "z" to "gs" command
+   Use "z" to scroll right in addition to right arrow
+      lib/vip.l
+
+26apr19
+   Handle 'T' hook in '+ObjVal'
+      lib/form.l
+
+24apr19
+   Added hint to read-macros to 'as'
+      doc/refA.html
+
+21apr19
+   'repl' CSS class
+      lib/phone.css
+
+19apr19
+   Remove 'nulp' instruction
+      src64/arch/arm64.l
+   Check socket in 'serverSend'
+      lib/xhtml.l
+
+17apr19
+   Remove 'nulp' instruction
+      doc64/asm
+      src64/arch/arm64.l
+      src64/arch/x86-64.l
+      src64/arch/ppc64.l
+      src64/arch/emu.l
+      src64/lib/asm.l
+      src64/net.l
+   Minor comment
+      src64/flow.l
+   File name handling
+      lib/vip.l
+
+13apr19
+   Clean up file name handling
+   'scratch' function
+      lib/vip.l
+
+12apr19
+   Add '*F8' and  '*F9'
+      lib/vip.l
+
+09apr19
+   Close stale task in 'serverSentEvent'
+      lib/xhtml.l
+
+08apr19
+   Minor comment formatting
+      games/chess.l
+
+07apr19
+   Mark trailing space also after backslash
+      lib/vip.l
+
+04apr19
+   'fName' in auto-load
+      lib/vip.l
+
+03apr19
+   Handle leading '@' in 'wordFun'
+      lib/vip.l
+
+02apr19
+   Bug for empty 'spell' result
+   Wrong 'gc' size calculation
+      lib/vip.l
+   '<dl>', '<dt>' and '<dd>' tags
+      lib/xhtml.l
+
+31mar19
+   Scroll left/right by 3 instead of 1
+      lib/vip.l
+
+24mar19
+   Changes in 'notify' for SDK >= 26
+      lib/android.l
+
+22mar19
+   Default argument 'null' for 'notify'
+      lib/android.l
+
+16mar19
+   Replace 'getPackageName' with direct value
+      lib/android.l
+
+09mar19
+   Change CONTEXT offset to "H@@@"
+   Add 'javaExt' function
+      lib/android.l
+
+06mar19
+   Change 'stepBtn' list argument to direct cons pair
+      lib/xhtml.l
+
+05mar19
+   Optional exclude-list argument to 'clone>'
+      lib/db.l
+
+04mar19
+   Mark trailing space also in comments
+      lib/vip.l
+
+02mar19
+   Avoid full (lock) in 'admin' and 'dbCheck'
+      lib/too.l
+      lib/dbgc.l
+
+26feb19
+   Remove (incompatible) namespace support
+      ersatz/sys.src
+      ersatz/fun.src
+      ersatz/mkJar
+      ersatz/lib.l
+
+25feb19
+   Single-pass 'dbgc' in new file
+      lib/dbgc.l
+   'dbgc' stub function
+      lib/too.l
+   Fix http:// to https://
+      INSTALL
+   Skip block comments in 'indent'
+      lib/vip.l
+
+23feb19
+   Move .relNN classes to @lib.css
+      lib.css
+      lib/phone.css
+
+21feb19
+   More .relNN classes
+      lib/phone.css
+
+18feb19
+   Default 'login>' method
+      lib/adm.l
+
+16feb19
+   Default "https://" in '+HttpField'
+      lib/form.l
+
+14feb19
+   Transient "Var" in 'accu'
+      lib.l
+      mini/lib/misc.l
+      ersatz/lib.l
+      pilos/init/lib.l
+
+11feb19
+   Abandon the habit of super parentheses for (local) lists
+      lib/android.l
+      lib/gis.l
+      lib/vip.l
+      doc/refL.html
+   Add 'runOnUiThread' to local
+      lib/android.l
+
+07feb19
+   'in', 'out', 'pipe' and 'load' pipe exit status code in '@@'
+      src64/io.l
+      src/io.c
+      doc/refI.html
+      doc/refO.html
+      doc/refP.html
+
+04feb19
+   Set document.title in 'serverSentEvent'
+      lib/xhtml.l
+
+02feb19
+   "v" view hook
+      lib/vip.l
+
+01feb19
+   Added note to 'curry'
+      doc/refC.html
+
+31jan19
+   Mark trailing space
+      lib/vip.l
+
+30jan19
+   Fixes for F12
+      src/Makefile
+      src64/sys/x86-64.freeBsd.defs.l
+   Change to ld4/st4 in errno_A/errnoC
+      src64/sys/x86-64.freeBsd.code.l
+      src64/sys/x86-64.openBsd.code.l
+      src64/sys/x86-64.sunOs.code.l
+
+29jan19
+   Minor tuning
+      lib/import.l
+
+27jan19
+   Bug in 'tzo' for negative offsets (Rick Hanson)
+      src64/main.l
+
+26jan19
+   "See also" link to 'set'
+      doc/refC.html
+
+25jan19
+   Minor tuning
+   Auto-load "# VIP " in first line
+      lib/vip.l
+
+24jan19
+   Auto-load "# VIP " in first line
+      lib/vip.l
+   Minor fixes (Mike Pechkin)
+      doc/faq.html
+      test/src/sym.l
+
+20jan19
+   'dirty>' buffer method
+   Fix pass window to 'load>'
+      lib/vip.l
+
+19jan19
+   Pass window to 'load>' and 'save>'
+   Redirect 'err' in 'command' eval and F7
+      lib/vip.l
+
+18jan19
+   <space> does ":" (instead of scroll down)
+      lib/vip.l
+
+10jan19
+   '*Retire' global
+      lib/http.l
+
+09jan19
+   Fixed 'wordFun'
+      lib/vip.l
+
+08jan19
+   Pass form into 'gui>'
+      lib/user.l
+
+05jan19
+   Undo locking
+      bin/replica
+
+04jan19
+   Removed ^F "write history" command
+      lib/led.l
+
+03jan19
+   OpenLayers update
+      lib/gis.l
+
+28dec18
+   Comments
+      lib/android.l
+
 ####### 18.12 #######
 25dec18
    Bug in *Tsm removal

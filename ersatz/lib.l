@@ -1,4 +1,4 @@
-# 10jul18abu
+# 26feb19abu
 # (c) Software Lab. Alexander Burger
 
 (setq
@@ -194,14 +194,6 @@
             (loc S (car X))
             (loc S (cdr X)) ) ) ) )
 
-(de local Lst
-   (mapc zap Lst) )
-
-(de import Lst
-   (for Sym Lst
-      (unless (== Sym (intern Sym))
-         (quit "Import conflict" Sym) ) ) )
-
 ### OOP ###
 (de class Lst
    (let L (val (setq *Class (car Lst)))
@@ -267,11 +259,11 @@
       0 ) )
 
 # Accumulate
-(de accu (Var Key Val)
+(de accu ("Var" Key Val)
    (when Val
-      (if (assoc Key (val Var))
+      (if (assoc Key (val "Var"))
          (con @ (+ Val (cdr @)))
-         (push Var (cons Key Val)) ) ) )
+         (push "Var" (cons Key Val)) ) ) )
 
 # Flooding Algorithm
 (de flood ("Lst" "Fun" "Init")
@@ -1447,10 +1439,6 @@
 `*Dbg
 
 ############ lib/debug.l ############
-
-# Prompt
-(de *Prompt
-   (unless (== (symbols) 'pico) (symbols)) )
 
 # Browsing
 (de doc (Sym Browser)

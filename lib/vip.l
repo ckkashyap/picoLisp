@@ -1,13 +1,14 @@
-# 16dec18abu
+# 03jun19abu
 # (c) Software Lab. Alexander Burger
 
 (symbols 'vip 'pico)
-(local) [
-   *CmdWin *Flat *Chr *Complete *Repeat *Change *Count *Cnt *Search *Clip *Lines
-   *Columns *TagStack *Spell *F10 *F11 *F12 ]
+
+(local) (*CmdWin *StatNm *Flat *Chr *Complete *Repeat *Change *Count *Cnt
+*Search *Clip *Lines *Columns *TagStack *Spell *F8 *F9 *F10 *F11 *F12 *@)
 
 ### Curses library interface ###
 (local) curses
+
 (de curses @
    (pass native
       `(or
@@ -17,37 +18,43 @@
          (quit "No CURSES found") ) ) )
 
 ### VIP Editor ###
-(local) [
-   *Buffers +Buffer fName rplFile fileBuffer rdLines delim? markup load> save>
-   status ]
+(local) (*Buffers +Buffer fName rplFile fileBuffer rdLines delim? markup min1
+beep undo redo evCmd dirty> load> save> view> status)
+
 (class +Buffer)
-# text file key undo redo dirt pos lastX lastY <c>
+# text file key undo redo dirt posX posY lastX lastY fmt <c>
 
 (dm T (File Y)
    (and (=: file File) (queue '*Buffers This))
-   (=: pos (or Y 1))
-   (=: lastX (=: lastY 1)) )
+   (=: posX 1)
+   (=: posY (or Y 1))
+   (=: lastX (=: lastY 1))
+   (=: fmt 80) )
 
 (de fName (File)
-   (if (pre? "~/" File)
-      (pack (sys "HOME") "/" (cddr (chop File)))
+   (when
+      (setq File
+         (if (pre? "~/" File)
+            (pack (sys "HOME") "/" (cddr (chop File)))
+            (path File) ) )
+      (use R
+         (when (=0 (native "@" "realpath" 'N File '(R (4096 C . 4096))))
+            (setq R (chop File)) )
+         (pack
+            (if (head (chop (pwd)) R)
+               (cddr (nth R (length (pwd))))
+               R ) ) ) ) )
+
+(de prName (File)
+   (if (pre? (sys "HOME") File)
+      (pack "~/" (cddr (nth (chop File) (length (sys "HOME")))))
       File ) )
 
 (de rplFile (File)
    (pack (replace (chop File) "%" (: buffer file))) )
 
 (de fileBuffer (File Y)
-   (when File
-      (use (R @P)
-         (unless (=0 (native "@" "realpath" 'N (fName File) '(R (4096 C . 4096))))
-            (setq File
-               (pack
-                  (cond
-                     ((match (conc (chop (pwd)) '(@P)) R)
-                        (cdr @P) )
-                     ((match (conc (chop (sys "HOME")) '(@P)) R)
-                        (cons "~/" (cdr @P)) )
-                     (T R) ) ) ) ) ) )
+   (setq File (fName File))
    (or
       (find '((This) (= File (: file))) *Buffers)
       (new '(+Buffer) File Y) ) )
@@ -78,8 +85,12 @@
                         (when (= "{" (car L))
                            (set (++ L) (inc 'N)) ) )
                      (text 'text
-                        (set (setq P C))
-                        (and (= "\\" C) L (set (++ L))) )
+                        (or
+                           (set (setq P C)
+                              (and (sp? C) (not L)) )
+                           (when (= "\\" C)
+                              (let? C (++ L)
+                                 (set C (and (sp? C) (not L))) ) ) ) )
                      (string (and (= "\"" C) 'text)
                         (set (setq P C) 0) )
                      (string (and (= "\\" C) (not L) 'skip)
@@ -96,7 +107,10 @@
                      (comment
                         (cond
                            ((=1 (set (setq P C) N))
-                              (if L 'comment 'text) )
+                              (if L
+                                 'comment
+                                 (and (sp? C) (not L) (set P T))
+                                 'text ) )
                            ((and
                                  (= "}" C)
                                  (= "#" (car L))
@@ -109,48 +123,66 @@
                                  (set (++ L) (inc 'N)) )
                               'comment ) ) ) ) ) ) ) ) ) )
 
-(dm load> ()
+(de min1 (A B)
+   (max 1 (min A B)) )
+
+(de beep ()
+   (curses "beep") )
+
+(dm dirty> (Win)
+   (<> (: undo) (: dirt)) )
+
+(dm load> (Win)
    (markup
       (=: text
-         (let? File (fName (: file))
+         (let? File (: file)
             (let? I (info File)
                (if (=T (car I))
                   (let D (chop File)
                      (unless (= "/" (last D))
-                        (conc D (list (char `(char "/")))) )
+                        (conc D (list (name "/"))) )
                      (mapcar
                         '((F)
                            (conc
                               (chop (setq F (pack D F)))
                               (when (=T (car (info F)))
-                                 (list (char `(char "/"))) ) ) )
+                                 (list (name "/")) ) ) )
                         (sort (dir File)) ) )
-                  (gc (+ 4 (*/ (car I) 65536)))  # 2 cells / char
+                  (gc (+ 4 (*/ (car I) 32768)))  # 2 cells / char
                   (if (sys "CCRYPT" (: key))
                      (pipe
                         (in File (out '("ccrypt" "-d" "-ECCRYPT") (echo)))
                         (rdLines) )
                      (in File (rdLines)) ) ) ) ) ) )
    (=: undo (=: redo (=: dirt)))
-   (=: pos (min1 (: pos) (length (: text)))) )
+   (=: posX 1)
+   (=: posY (min1 (: posY) (length (: text))))
+   (and
+      (head '`(chop "# VIP ") (: text 1))
+      (clip (: text 1 -6))
+      (evCmd (load (fName (pack @)))) ) )
 
-(dm save> ()
-   (when (fName (: file))
+(dm save> (Win)
+   (when (: file)
       (unless (=T (car (info @)))
          (if (sys "CCRYPT" (: key))
             (pipe
                (out '("ccrypt" "-e" "-ECCRYPT")
                   (mapc prinl (: text)) )
-               (out (fName (: file)) (echo)) )
-            (out (fName (: file)) (mapc prinl (: text))) ) )
+               (out (: file) (echo)) )
+            (out (: file) (mapc prinl (: text))) ) )
       (=: dirt (: undo))
       (for (This *CmdWin (setq This (: next)))
          (status) ) ) )
 
+(dm view> (Win)
+   (beep) )
 
-(local) [*Window +Window]
+
+(local) (*Window +Window)
+
 (class +Window)
-# buffer top lines status ptr winX winY posX posY prev next last mark
+# buffer top lines status ptr winX winY posX posY prev next last mark sc
 
 (dm T (Buffer Top Height WinX WinY PosX PosY Prev Mark)
    (=: buffer Buffer)
@@ -168,23 +200,20 @@
    (=: winY WinY)
    (=: posX PosX)
    (=: posY PosY)
-   (=: mark Mark) )
+   (=: mark Mark)
+   (=: sc 0) )
+
+(dm view> ()
+   (view> (: buffer) This) )
 
 
-(local) [
-   min1 beep delwin cursor addLine chgLine unmark redraw repaint scroll goto
-   chgwin eqwin getch getch2 reload done change undo redo jmp@@ cnt@@ goCol
-   goLeft goRight goUp goDown goAbs goFind word lword end lend getWord _forward
-   goForward _backward goBackward goPFore goPBack shift shiftY indent cutX cutN
-   paste join tglCase insChar incNum overwrite _bs insMode cmdMode cmdPipe evRpt
-   move chgRight jmpMark wordFun moveSearch patMatch parMatch pipeN nextBuf
-   shell shFile prCmd reset command vi ]
-
-(de min1 (A B)
-   (max 1 (min A B)) )
-
-(de beep ()
-   (curses "beep") )
+(local) (delwin cursor addLine chgLine unmark redraw repaint scroll scLeft
+scRight goto chgwin eqwin getch getch2 reload scratch done change jmp@@ cnt@@
+goCol goLeft goRight goUp goDown goAbs goFind word lword end lend getWord
+_forward goForward _backward goBackward goPFore goPBack shift shiftY indent cutX
+cutN paste join tglCase insChar incNum overwrite _bs insMode cmdMode cmdPipe
+evRpt move chgRight jmpMark wordFun moveSearch patMatch parMatch spell pipeN
+nextBuf shell shFile prCmd reset command vi)
 
 (de delwin ()
    (when (=: prev next (: next))
@@ -214,7 +243,7 @@
                512 )  # COLOR_PAIR(2)
             ((gt0 (val C)) 256)  # COLOR_PAIR(1)
             (T 0) ) )
-      (curses "waddnstr" NIL (: ptr) C  -1) ) )
+      (curses "waddnstr" NIL (: ptr) C -1) ) )
 
 (de chgLine (L)
    (cursor)
@@ -236,9 +265,8 @@
                   (index (: buffer) *Buffers)
                   "/"
                   (length *Buffers)
-                  " "
-                  (: buffer file)
-                  (unless (= (: buffer undo) (: buffer dirt)) " [+]") )
+                  (if (dirty> (: buffer) This) " * " " ") )
+               F (prName (: buffer file))
                Z (pack
                   (: mark)
                   " "
@@ -247,7 +275,18 @@
                      (*/ 100 (dec (: posY)) @)
                      0 )
                   "%" ) )
-            (pack A (need (- *Columns (length A) (length Z)) " ") Z) ) )
+            (cond
+               ((ge0
+                     (setq N
+                        (- *Columns (length A) (length F) (length Z)) ) )
+                  (pack A F (need N " ") Z) )
+               ((onOff *StatNm)
+                  (align (- *Columns) (tail *Columns (chop F))) )
+               (T
+                  (pack
+                     A
+                     (need (- *Columns (length A) (length Z)) " ")
+                     Z ) ) ) ) )
       (curses "wrefresh" NIL (: status)) ) )
 
 (de redraw (Flg)
@@ -266,6 +305,25 @@
    (curses "scrollok" NIL (: ptr) 1)
    (curses "wscrl" NIL (: ptr) N)
    (curses "scrollok" NIL (: ptr) 0) )
+
+(de scLeft (N)
+   (and
+      (> (: winX) 1)
+      (>= (- (: posX) (dec (:: winX))) *Columns)
+      (dec (:: posX)) ) )
+
+(de scRight (N)
+   (cond
+      ((> (: posX) (: winX))
+         (inc (:: winX)) )
+      ((cdr (nth (: buffer text) (: posY) (: posX)))
+         (inc (:: posX))
+         (inc (:: winX)) )
+      (T
+         (for (Y . L) (cdr (nth (: buffer text) (: posY)))
+            (T (cdr (nth L (: posX)))
+               (inc (:: posY) Y) )
+            (T (= Y (: lines))) ) ) ) )
 
 (de goto (X Y Flg)
    (if
@@ -290,9 +348,9 @@
                (scroll -1)
                (addLine 0 (get (: buffer text) (dec (:: winY))) *Columns) ) ) )
       (=: winX
-         (if (>= *Columns X)
+         (if (>= (*/ *Columns 3 4) X)
             1
-            (- X (/ *Columns 4)) ) )
+            (- X (/ *Columns 2)) ) )
       (=: winY
          (min1
             (- Y (/ (: lines) 2))
@@ -301,8 +359,8 @@
    (when Flg (redraw T))
    (unless (== This *Window)
       (curses "wrefresh" NIL (: ptr)) )
-   (=: posX X)
-   (=: buffer pos (=: posY Y))
+   (=: buffer posX (=: posX X))
+   (=: buffer posY (=: posY Y))
    (status) )
 
 (de chgwin (Lines Top)
@@ -347,7 +405,7 @@
             (mapc curses '("noraw" "cbreak")) )
          C ) ) )
 
-(de reload (File N)
+(de reload (File Y)
    (unless (== This *CmdWin)
       (when File
          (unless
@@ -355,14 +413,28 @@
                (=: last (: buffer))
                (=: buffer (fileBuffer File)) )
             (unmark) ) )
-      (load> (: buffer))
-      (goto 1 (or N (: buffer pos)) T)
+      (load> (: buffer) This)
+      (goto 1 (or Y (: buffer posY)) T)
+      (off *StatNm)
       (repaint) ) )
 
+(de scratch (File Lst Y)
+   (setq File (fName File))
+   (if (find '((This) (= File (: file))) *Buffers)
+      (put @ 'text Lst)
+      (=: last (: buffer))
+      (unmark)
+      (put
+         (=: buffer (new '(+Buffer) File Y))
+         'text
+         Lst )
+      (goto 1 (: buffer posY) T) )
+   (repaint) )
+
 (de done (Flg)
-   (when Flg
-      (unless (= (: buffer undo) (: buffer dirt))
-         (save> (: buffer)) ) )
+   (and Flg
+      (dirty> (: buffer) This)
+      (save> (: buffer) This) )
    (unmark)
    (nond
       ((; *CmdWin next next) (throw 'done Flg))
@@ -585,7 +657,7 @@
          (do N
             (when (car P)
                (if Flg
-                  (do 3 (push P (char 32)))
+                  (do 3 (push P (name " ")))
                   (do 3
                      (NIL (sp? (caar P)))
                      (pop P) ) ) )
@@ -603,7 +675,7 @@
             (let (N (*/ (offset @ (trim (car P))) 3)  Sup N)
                (set P @)
                (loop
-                  (do (* N 3) (push P (char 32)))
+                  (do (* N 3) (push P (name " ")))
                   (for C (car P)
                      (unless (val C)
                         (case C
@@ -611,6 +683,8 @@
                            (")" (dec 'N))
                            ("[" (push 'Sup N) (inc 'N))
                            ("]" (setq N (++ Sup))) ) ) )
+                  (while (val (caadr P))
+                     (++ P) )
                   (NIL (clip (cadr P)) T)
                   (setq P (con P (cons @ (cddr P)))) ) ) ) ) ) )
 
@@ -700,7 +774,7 @@
          (set Pos
             (append
                (car Pos)
-               (cons (char 32) (clip (cadr Pos))) ) )
+               (cons (name " ") (clip (cadr Pos))) ) )
          (con Pos (cddr Pos)) )
       T ) )
 
@@ -743,7 +817,7 @@
                            (need
                               (if (= `(char "0") (char S)) (length S) 1)
                               (chop (max 0 (+ Cnt (format S))))
-                              (char `(char "0")) )
+                              (name "0") )
                            (tail (- (: posX)) L) ) ) )
                   (length L) ) ) ) ) ) )
 
@@ -807,7 +881,7 @@
                            (setq S
                               (make
                                  (do (- 3 (% (dec (: posX)) 3))
-                                    (link (char 32)) ) ) ) )
+                                    (link (name " ")) ) ) ) )
                         (NIL
                            (default *Complete
                               (conc
@@ -890,19 +964,20 @@
       ((get (: buffer) (intern C))
          (move 'goAbs (default X (car @)) (cdr @)) ) ) )
 
-(de wordFun (@W)
-   (setq @W (append @W '("@Z")))
+(de wordFun (W)
    (setq *Search
-      (curry (@W) (L C)
-         (and
-            (delim? C "~")
-            (match '@W L)
-            (delim? (car "@Z") "~")
-            (not
-               (find
-                  '((C)
-                     (and (= C `(char 64)) (find delim? (val C))) )
-                  '@W ) ) ) ) ) )
+      (ifn (= '"@" (car (setq W (append W '("@Z")))))
+         (curry (W) (L C)
+            (and
+               (delim? C "~")
+               (match W L)
+               (delim? (car "@Z") "~") ) )
+         (++ W)
+         (curry (W) (L C)
+            (and
+               (delim? C "~")
+               (and (= '"@" (car L)) (match W (cdr L)))
+               (delim? (car "@Z") "~") ) ) ) ) )
 
 (de moveSearch (Fun1 Fun2)
    (move Fun1 (lit Fun2) *Cnt) )
@@ -923,28 +998,6 @@
                   (curry (@Pat) (L C)
                      (unless C (match '@Pat L)) ) ) ) ) ) ) )
 
-(de *Spell
-   "hunspell" "-l" "-d" "en_US,de_DE" )
-
-(de spell ()
-   (moveSearch 'goForward
-      (setq *Search
-         (let @W
-            (pipe
-               (out *Spell
-                  (let Pos (nth (: buffer text) (: posY))
-                     (prinl
-                        (seek
-                           '((L) (not (fold (car L))))
-                           (nth (++ Pos) (: posX)) ) )
-                     (mapc prinl Pos) ) )
-               (conc (line) '("@Z")) )
-            (curry (@W) (L C)
-               (and
-                  (not (fold C))
-                  (match '@W L)
-                  (not (fold (car "@Z"))) ) ) ) ) ) )
-
 (de parMatch (Fun1 @Par1 @Sup1 @ParO @ParC @SupO @SupC)
    (moveSearch Fun1
       (let (Par @Par1  Sup @Sup1)
@@ -961,6 +1014,29 @@
                            (= (setq Par (++ Sup)) 0 Sup) ) ) )
                   (setq Par @Par1  Sup @Sup1) ) ) ) ) ) )
 
+(de *Spell
+   "hunspell" "-l" "-d" "en_US,de_DE" )
+
+(de spell ()
+   (when
+      (pipe
+         (out *Spell
+            (let Pos (nth (: buffer text) (: posY))
+               (prinl
+                  (seek
+                     '((L) (not (fold (car L))))
+                     (nth (++ Pos) (: posX)) ) )
+               (mapc prinl Pos) ) )
+         (line) )
+      (let @W (conc @ '("@Z"))
+         (moveSearch 'goForward
+            (setq *Search
+               (curry (@W) (L C)
+                  (and
+                     (not (fold C))
+                     (match '@W L)
+                     (not (fold (car "@Z"))) ) ) ) ) ) ) )
+
 (de pipeN (Cnt Line)
    (evRpt
       (fill
@@ -972,16 +1048,17 @@
 (de nextBuf (B)
    (let? M (member (: buffer) *Buffers)
       (=: last (: buffer))
+      (unmark)
       (=: buffer
          (nond
             (B (car (or (cdr M) *Buffers)))
             ((=T B) B)
             (NIL
                (car (or (prior M *Buffers) (tail 1 *Buffers))) ) ) )
-      (unmark)
       (unless (: buffer text)
-         (load> (: buffer)) )
-      (goto 1 (: buffer pos) T) ) )
+         (load> (: buffer) This) )
+      (off *StatNm)
+      (goto (: buffer posX) (: buffer posY) T) ) )
 
 (de shell (S)
    (curses "endwin")
@@ -993,12 +1070,22 @@
 
 (de shFile (S)
    (when (: buffer file)
-      (shell (text S (path (fName @)) *Cnt)) ) )
+      (shell (text S @ *Cnt)) ) )
 
 (de prCmd (L)
    (with *CmdWin
-      (paste (cons T L) T)
+      (paste (cons T L) (: buffer text))
       (inc (:: posY) (dec (length L))) ) )
+
+(de evCmd Prg
+   (out (tmp "repl")
+      (err NIL
+         (catch '(NIL)
+            (setq @ *@  *@ (run Prg 1) *Msg)
+            (println '-> *@) ) )
+      (and *Msg (prinl @)) )
+   (in (tmp "repl")
+      (prCmd (rdLines)) ) )
 
 (de reset ()
    (off *Count *Change)
@@ -1022,10 +1109,7 @@
                (setq Line (pack (clip Line)))
                (case C
                   (" "  # Eval
-                     (out (tmp "repl")
-                        (println '-> (run (str (pack Line)))) )
-                     (in (tmp "repl")
-                        (prCmd (rdLines)) ) )
+                     (evCmd (run (str (pack Line)))) )
                   ("!"  # External filter
                      (when Line
                         (if (=0 Cnt)
@@ -1050,10 +1134,11 @@
                      (prCmd
                         (make
                            (for (I . This) *Buffers
-                              (link (chop (pack ":" I " " (: file)))) ) ) ) )
+                              (link
+                                 (chop (pack ":" I " " (prName (: file)))) ) ) ) ) )
                   ("key" (=: buffer key Line) (reload))
                   ("m"
-                     (when (info (=: mark (rplFile Line)))
+                     (when (info (=: mark (fName (rplFile Line))))
                         (in (: mark) (move 'goAbs (read) (read))) ) )
                   ("n" (nextBuf))  # Next buffer
                   ("N" (nextBuf T))  # Previous buffer
@@ -1066,7 +1151,7 @@
                      (if Line
                         (out (fName (rplFile @))
                            (mapc prinl (: buffer text)) )
-                        (save> (: buffer)) ) )
+                        (save> (: buffer) This) ) )
                   ("x" (done T))  # (Exit) Save buffer and close window
                   ("q" (done))  # (Quit) Close window
                   ("bx"  # Buffer exchange
@@ -1133,9 +1218,9 @@
             0 (dec *Lines)
             1
             (min1
-               (- (: pos) (/ (- *Lines 2) 2))
+               (- (: posY) (/ (- *Lines 2) 2))
                (- (length (: text)) *Lines -3) )
-            1 (: pos)
+            1 (: posY)
             *CmdWin ) )
       (with (setq *Window (; *CmdWin next)) (redraw))
       (catch 'done
@@ -1180,26 +1265,19 @@
                         (("\n" "\r")
                            (if (== This *CmdWin)
                               (command (: next) (get (: buffer text) (: posY)))
-                              (cmdMode) ) )
+                              (goto 1 (inc (: posY)))  # Go to next line
+                              (do (: sc) (scRight))
+                              (redraw) ) )
                         ("." (if *Repeat (eval @) (beep)))  # Repeat last change
                         (("j" `(char 258)) (move 'goDown *Cnt))  # [DOWN] Move down
-                        ((" " "^F" `(char 338)) (move 'goDown (: lines)))  # [NPAGE] Page down
+                        (("^F" `(char 338)) (move 'goDown (: lines)))  # [NPAGE] Page down
                         (("k" `(char 259)) (move 'goUp *Cnt))  # [UP] Move up
                         (("^B" `(char 339)) (move 'goUp (: lines)))  # [PPAGE] Page up
                         ("h" (move 'goLeft *Cnt))  # Move left
                         ("l" (move 'goRight *Cnt))  # Move right
-                        (`(char 260)  # [LEFT] Scroll left
-                           (when (> (: winX) 1)
-                              (when (>= (- (: posX) (dec (:: winX))) *Columns)
-                                 (dec (:: posX)) ) )
-                           (redraw) )
-                        (`(char 261)  # [RIGHT] Scroll right
-                           (cond
-                              ((> (: posX) (: winX)) (inc (:: winX)))
-                              ((cdr (nth (: buffer text) (: posY) (: posX)))
-                                 (inc (:: posX))
-                                 (inc (:: winX)) ) )
-                           (redraw) )
+                        (`(char 260) (scLeft) (redraw))  # [LEFT] Scroll left
+                        (`(char 261) (scRight) (redraw))  # [RIGHT] Scroll right
+                        ("z" (do 3 (scRight)) (redraw))  # Scroll right 3 columns
                         ("|" (move 'goCol *Cnt))  # Go to column
                         ("$" (move 'goRight T))  # Go to end of line
                         ("G" (move 'goAbs 1 (or (format *Count) T)))  # Go to end of text
@@ -1216,10 +1294,10 @@
                         ("'" (jmpMark (getch) "'" 1))  # Jump to mark line
                         ("`" (jmpMark (getch) "`")) # Jump to mark position
                         ("~" (evRpt (list 'tglCase *Cnt)))  # Toggle case
-                        (":" (cmdMode (char `(char ":"))))  # Command
-                        ("/" (cmdMode (char `(char "/"))))  # Search forward
-                        ("?" (cmdMode (char `(char "?"))))  # Search backward
-                        ("&" (cmdMode (char `(char "&"))))  # Search word
+                        ((":" " ") (cmdMode (name ":")))  # Command
+                        ("/" (cmdMode (name "/")))  # Search forward
+                        ("?" (cmdMode (name "?")))  # Search backward
+                        ("&" (cmdMode (name "&")))  # Search word
                         ("n"  # Search next
                            (if *Search
                               (move 'goForward (lit @) *Cnt)
@@ -1270,6 +1348,7 @@
                         ("m"  # Set mark
                            (put (: buffer) (intern (getch))
                               (cons (: posX) (: posY)) ) )
+                        ("M" (=: sc (dec (: winX))))  # Mark horizontal scroll position
                         ("r"  # Replace character(s)
                            (and (getch2 (getch)) (evRpt (list 'insChar @ *Cnt))) )
                         ("R"  # Replace
@@ -1287,6 +1366,7 @@
                            (case (getch)
                               ("f" (reload (pack (getWord T))))  # [gf] Edit file under cursor
                               ("g" (move 'goAbs 1 1))  # [gg] Go to beginning of text
+                              ("s" (spell))
                               (T (beep)) ) )
                         ("+"  # Increase window size
                            (loop
@@ -1336,17 +1416,18 @@
                         (`(char (+ 264 3))  # [F3] Custom dif
                            (shFile "dif @1 @2") )
                         (`(char (+ 264 4))  # [F4] Format paragraph
+                           (and *Count (=: buffer fmt @))
                            (goPFore 1 -1)
-                           (pipeN (cnt@@) "fmt") )
+                           (pipeN (cnt@@) (pack "fmt -" (: buffer fmt))) )
                         (`(char (+ 264 5))  # [F5] Previous buffer
                            (nextBuf T) )
                         (`(char (+ 264 6))  # [F6] Next buffer
                            (nextBuf) )
                         (`(char (+ 264 7))  # [F7] Load file
-                           (let? F (fName (: buffer file))
-                              (and (info F) (catch '(NIL) (load F))) ) )
-                        ## (`(char (+ 264 8)) ())  # [F8]
-                        ## (`(char (+ 264 9)) ())  # [F9]
+                           (when (: buffer file)
+                              (evCmd (load @)) ) )
+                        (`(char (+ 264 8)) (run *F8))  # [F8] Custom key
+                        (`(char (+ 264 9)) (run *F9))  # [F9] Custom key
                         (`(char (+ 264 10)) (run *F10))  # [F10] Custom key
                         (`(char (+ 264 11)) (run *F11))  # [F11] Custom key
                         (`(char (+ 264 12)) (run *F12))  # [F12] Custom key
@@ -1355,7 +1436,6 @@
                               (if *Count
                                  (get *Buffers (format @))
                                  (or (: last) (car *Buffers)) ) ) )
-                        ("z" (spell))
                         (("q" "^W")  # ["Window" prefix]
                            (case (getch)
                               ("s"  # [qs] Split window
@@ -1385,6 +1465,7 @@
                               ("j" (and (: prev) (setq *Window @)))  # [qj] Below window
                               ("q" (done))  # [qq] (Quit) Close window
                               (T (beep)) ) )
+                        ("v" (view> This))  # View hook
                         ("Z" (done T))
                         (T (beep)) )
                      (reset) ) ) ) ) ) ) )

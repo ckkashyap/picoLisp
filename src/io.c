@@ -1,4 +1,4 @@
-/* 25dec18abu
+/* 17may19abu
  * (c) Software Lab. Alexander Burger
  */
 
@@ -943,13 +943,17 @@ void pushCtlFiles(ctlFrame *f) {
 void popInFiles(void) {
    if (Env.inFrames->pid) {
       close(Env.inFrames->fd),  closeInFile(Env.inFrames->fd);
-      if (Env.inFrames->pid > 1)
-         while (waitpid(Env.inFrames->pid, NULL, 0) < 0) {
+      if (Env.inFrames->pid > 1) {
+         int res;
+
+         while (waitpid(Env.inFrames->pid, &res, 0) < 0) {
             if (errno != EINTR)
                closeErr();
             if (*Signal)
                sighandler(NULL);
          }
+         val(At2) = box(res+res);
+      }
    }
    else if (InFile)
       InFile->next = Chr;
@@ -963,13 +967,17 @@ void popOutFiles(void) {
    flush(OutFile);
    if (Env.outFrames->pid) {
       close(Env.outFrames->fd),  closeOutFile(Env.outFrames->fd);
-      if (Env.outFrames->pid > 1)
-         while (waitpid(Env.outFrames->pid, NULL, 0) < 0) {
+      if (Env.outFrames->pid > 1) {
+         int res;
+
+         while (waitpid(Env.outFrames->pid, &res, 0) < 0) {
             if (errno != EINTR)
                closeErr();
             if (*Signal)
                sighandler(NULL);
          }
+         val(At2) = box(res+res);
+      }
    }
    Env.put = Env.outFrames->put;
    OutFile = OutFiles[(Env.outFrames = Env.outFrames->link)? Env.outFrames->fd : STDOUT_FILENO];
@@ -1984,16 +1992,22 @@ any doLines(any x) {
 }
 
 static any parse(any x, bool skp, any s) {
-   int c;
    parseFrame *save, parser;
-   void (*getSave)(void);
+   inFrame f;
    cell c1;
 
    save = Env.parser;
    Env.parser = &parser;
    parser.dig = unDig(parser.name = name(x));
    parser.eof = s? 0xFF : 0xFF5D0A;
-   getSave = Env.get,  Env.get = getParse,  c = Chr,  Chr = 0;
+   f.pid = 0,  f.fd = STDIN_FILENO;
+   if (InFile) {
+      InFile->next = Chr;
+      InFile = NULL;
+   }
+   Chr = 0;
+   f.get = Env.get,  Env.get = getParse;
+   f.link = Env.inFrames,  Env.inFrames = &f;
    Push(c1, Env.parser->name);
    if (skp)
       getParse();
@@ -2013,7 +2027,8 @@ static any parse(any x, bool skp, any s) {
       }
    }
    drop(c1);
-   Chr = c,  Env.get = getSave,  Env.parser = save;
+   popInFiles();
+   Env.parser = save;
    return x;
 }
 
@@ -2043,21 +2058,28 @@ any doAny(any ex) {
    x = cdr(ex),  x = EVAL(car(x));
    NeedSym(ex,x);
    if (!isNil(x)) {
-      int c;
       parseFrame *save, parser;
-      void (*getSave)(void);
+      inFrame f;
       cell c1;
 
       save = Env.parser;
       Env.parser = &parser;
       parser.dig = unDig(parser.name = name(x));
       parser.eof = 0xFF20;
-      getSave = Env.get,  Env.get = getParse,  c = Chr,  Chr = 0;
+      f.pid = 0,  f.fd = STDIN_FILENO;
+      if (InFile) {
+         InFile->next = Chr;
+         InFile = NULL;
+      }
+      Chr = 0;
+      f.get = Env.get,  Env.get = getParse;
+      f.link = Env.inFrames,  Env.inFrames = &f;
       Push(c1, Env.parser->name);
       getParse();
       x = read0(YES);
       drop(c1);
-      Chr = c,  Env.get = getSave,  Env.parser = save;
+      popInFiles();
+      Env.parser = save;
    }
    return x;
 }

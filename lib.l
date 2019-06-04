@@ -1,4 +1,4 @@
-# 05sep18abu
+# 13may19abu
 # (c) Software Lab. Alexander Burger
 
 (de task (Key . Prg)
@@ -188,9 +188,12 @@
             (ifn (args)
                (cdr (assoc Key Lst))
                (let Val (next)
-                  (if (assoc Key Lst)
-                     (con @ Val)
-                     (push 'Lst (cons Key Val)) )
+                  (loop
+                     (if (assoc Key Lst)
+                        (con @ Val)
+                        (push 'Lst (cons Key Val)) )
+                     (NIL (args))
+                     (setq Key (next)  Val (next)) )
                   (protect
                      (out File (println Lst)) )
                   Val ) ) ) ) ) )
@@ -295,11 +298,11 @@
       0 ) )
 
 # Accumulate
-(de accu (Var Key Val)
+(de accu ("Var" Key Val)
    (when Val
-      (if (assoc Key (val Var))
+      (if (assoc Key (val "Var"))
          (con @ (+ Val (cdr @)))
-         (push Var (cons Key Val)) ) ) )
+         (push "Var" (cons Key Val)) ) ) )
 
 # Flooding Algorithm
 (de flood ("Lst" "Fun" "Init")

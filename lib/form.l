@@ -1,4 +1,4 @@
-# 29oct18abu
+# 04jun19abu
 # (c) Software Lab. Alexander Burger
 
 # *PRG *Top *Gui *Btn *Get *Got *Form *Evt *Lock *Spans
@@ -538,7 +538,7 @@
 (dm js> ()
    (cond
       ((: act) (super))
-      ((try (: msg) (: obj) 1)
+      ((try (: msg) (: obj) 1 This)
          (pack "@&+" (ht:Fmt (sesId (mkUrl @)))) )
       (T "@") ) )
 
@@ -546,7 +546,7 @@
    (if (: act)
       (super "Var")
       (<style> (cons 'id (pack "i" *Form "-" (: id)))
-         (if (try (: msg) (: obj) 1)
+         (if (try (: msg) (: obj) 1 This)
             (<tip> "-->" (<href> "@" (mkUrl @)))
             (<span> *Style "@") ) ) ) )
 
@@ -1727,7 +1727,7 @@
 
 (dm T @
    (pass super
-      '((S) (or (sub? "://" S) (pack "http://" S))) ) )
+      '((S) (or (sub? "://" S) (pack "https://" S))) ) )
 
 
 (class +MailField +Url +TextField)
@@ -2005,9 +2005,7 @@
                (rollback)
                (off *Lock) ) )
          (tryLock (: home obj)) ) )
-   (when (=: save Exe)
-      (for This (: home gui)
-         (and (isa '+Edit This) (=: save Exe)) ) ) )
+   (=: save Exe) )
 
 (de tryLock (Obj)
    (if (lock Obj)
@@ -2016,6 +2014,9 @@
       (tell)
       (setq *Lock Obj) ) )
 
+(de onDone (Exe)
+   (for This (: gui)
+      (and (isa '+Edit This) (=: save Exe)) ) )
 
 (de editButton (Able Exe)
    (<style> (and (: able) "edit")
@@ -2202,7 +2203,7 @@
 (dm js> ()
    (if (=T (: msg))
       (extra)
-      (if2 (or (: dx) (: lst)) (try (: msg) (: obj) 1)
+      (if2 (or (: dx) (: lst)) (try (: msg) (: obj) 1 This)
          (pack (extra) "&*" (ht:Fmt (sesId "@img/go.png")) "&" (ht:Fmt (sesId (mkUrl @))))
          (pack (extra) "&*" (ht:Fmt (sesId "@img/no.png")) "&")
          (pack (ht:Fmt (nonblank (str> This))) "&+" (ht:Fmt (sesId (mkUrl @))))
@@ -2215,11 +2216,11 @@
          (prin "<table cellspacing=\"0\" cellpadding=\"0\"><td>")
          (extra "Var")
          (prin "</td><td title=\"-->\">")
-         (if (try (: msg) (: obj) 1)
+         (if (try (: msg) (: obj) 1 This)
             (<img> "@img/go.png" 'obj (mkUrl @))
             (<img> "@img/no.png") )
          (prinl "</td></table>") )
-      ((try (: msg) (: obj) 1)
+      ((try (: msg) (: obj) 1 This)
          (showFld (<href> (nonblank (str> This)) (mkUrl @))) )
       (T (extra "Var")) ) )
 
@@ -2360,7 +2361,9 @@
          ((: obj)
             (dbSync)
             (=: obj (new (or (meta (: objTyp) 'Dbf 1) 1) (: objTyp)))
-            (when (: hook)
+            (and
+               (: hook)
+               (nT @)
                (put> (: obj) (: hook) (eval (: objHook))) )
             (put> (: obj) (: objVar) Val)
             (commit 'upd) )
@@ -2516,7 +2519,7 @@
                (list 'choDlg NIL (lit "Cho") (lit (list (fin "Var") "X"))) )
             "Var" "X"
             (and
-               (atom X)
+               (atom "X")
                (or (get "X" (fin "Var") 'hook) (meta "X" (fin "Var") 'hook))
                (get (: obj) @) ) )
          (run "Prg") ) ) )

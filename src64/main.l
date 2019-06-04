@@ -1,4 +1,4 @@
-# 18dec18abu
+# 27jan19abu
 # (c) Software Lab. Alexander Burger
 
 (code 'Code)
@@ -666,7 +666,7 @@
       eval  # Eval new byte
       cnt E  #  # Short number?
       jz cntErrEX  # No
-      ld A E  # Normalize into A 
+      ld A E  # Normalize into A
       shr A 4
       ld (Z) B  # Store new byte
    end
@@ -1992,17 +1992,7 @@
             end
             ld E (hex "FFFFFFFF")  # Sign-extend integer
             and E A  # into E
-            ld A (hex "80000000")
-            xor E A
-            sub E A  # Negative?
-            if ns  # No
-               shl E 4  # Make short number
-               or E CNT
-            else
-               neg E  # Negate
-               shl E 4  # Make negative short number
-               or E (| SIGN CNT)
-            end
+            call box4_E  # Sign-extend
          else
             cmp E NSym  # 'N'?
             if eq  # Yes
@@ -2605,6 +2595,20 @@
    or E SIGN  # Set negative
    ret
 
+(code 'box4_E 0)
+   ld A (hex "80000000")
+   xor E A
+   sub E A  # Negative?
+   if ns  # No
+      shl E 4  # Make short number
+      or E CNT
+      ret
+   end
+   neg E  # Negate
+   shl E 4  # Make negative short number
+   or E (| SIGN CNT)
+   ret
+
 (code 'putStringB 0)
    push X
    push C
@@ -3047,10 +3051,8 @@
 (code 'doTzo 2)
    cc localtime(Tv)  # (Any) time to local time
    ld4 (A TM_GMTOFF)  # Time offset in seconds east of GMT
-   ld E A
-   shl E 4  # Make short number
-   or E CNT
-   ret
+   ld E A  # into E
+   jmp box4_E  # Sign-extend
 
 # (usec ['flg]) -> num
 (code 'doUsec 2)

@@ -1,19 +1,16 @@
-# 15dec18abu
+# 02mar19abu
 # (c) Software Lab. Alexander Burger
 
 (de admin "Prg"
    (out 2
       (prinl *Pid " + Admin " (stamp))
-      (loop
-         (tell 'bye 2)
-         (NIL (lock))
-         (wait 200) )
+      (tell 'bye)
       (for (F . @) (or *Dbs (2))
          (when (dbck F)
             (quit "DB Check" (cons F @)) ) )
       (run "Prg")
-      (when (dbgc)
-         (println 'dbgc @) )
+      (when (load "@lib/dbgc.l")
+         (prinl "dbgc " @) )
       (prinl *Pid " - Admin " (stamp)) ) )
 
 ### Local Backup ###
@@ -68,50 +65,7 @@
 
 ### DB Garbage Collection ###
 (de dbgc ()
-   (markExt *DB)
-   (for L *ExtDBs  # ("path/" <cnt> <ofs>)
-      (let ((P N E) L  Lck)
-         (for I N
-            (let (Fd (open (pack P (hax (dec I))))  (Cnt . Siz) (blk Fd 0))
-               (and (=1 I) (setq Lck Fd))
-               (for Blk (dec Cnt)
-                  (mapc markExt
-                     (fish ext? (ext E (blk Fd Blk Siz Lck))) ) )
-               (close Fd) ) ) ) )
-   (let Cnt 0
-      (finally (mark 0)
-         (for (F . @) (or *Dbs (2))
-            (for (S (seq F)  S  (seq S))
-               (unless (mark S)
-                  (inc 'Cnt)
-                  (and (isa '+Entity S) (zap> S))
-                  (zap S) ) ) ) )
-      (commit)
-      (when *Blob
-         (use (@S @R F S)
-            (let Pat (conc (chop *Blob) '(@S "." @R))
-               (in (list 'find *Blob "-type" "f")
-                  (while (setq F (line))
-                     (when (match Pat F)
-                        (unless
-                           (and
-                              (setq S (extern (pack (replace @S '/))))
-                              (get S (intern (pack @R))) )
-                           (inc 'Cnt)
-                           (call "rm" (pack F)) )
-                        (wipe S) ) ) ) ) ) )
-      (gt0 Cnt) ) )
-
-(de markExt (S)
-   (unless (mark S T)
-      (markData (val S))
-      (maps markData S)
-      (wipe S) ) )
-
-(de markData (X)
-   (while (pair X)
-      (markData (++ X)) )
-   (and (ext? X) (markExt X)) )
+   (load "@lib/dbgc.l") )
 
 ### DB Mapping ###
 (de dbMap ("ObjFun" "TreeFun")
@@ -166,13 +120,10 @@
 
 ### DB Check ###
 (de dbCheck ()
-   (loop
-      (tell 'bye 2)
-      (NIL (lock))
-      (wait 200) )
    (for (F . N) (or *Dbs (2))  # Low-level integrity check
       (unless (pair (println F N (dbck F T)))
          (quit 'dbck @) ) )
+   (dbSync)
    (dbMap  # Check tree structures
       NIL
       '((Base Root Var Cls Hook)
@@ -192,7 +143,7 @@
    (and *Dbs (dbfCheck))  # Check DB file assignments
    (and (dangling) (println 'dangling @))  # Show dangling index references
    (and (badECnt) (println 'badECnt @))  # Show entity count mismatches
-   T )
+   (rollback) )
 
 # Check Index References
 (de dangling ()

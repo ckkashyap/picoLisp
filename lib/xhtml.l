@@ -1,4 +1,4 @@
-# 25oct18abu
+# 19apr19abu
 # (c) Software Lab. Alexander Burger
 
 # *JS "*JS" *Style *SsEvts *Menu *Tab *ID
@@ -141,18 +141,19 @@
    (<javascript>
       "(new EventSource(SesId+'!ssEvt?'+'"
       Id
-      "')).onmessage = function(ev) {document.getElementById('"
+      "')).onmessage = function(ev) {if (ev.data.charAt(0) == '&') document.title = ev.data.substr(1); else document.getElementById('"
       Id
-      "').innerHTML = ev.data}" )
+      "').innerHTML = ev.data;}" )
    (if (assoc Id *SsEvts)
       (con @ (cons Var (unless (val Var) Prg)))
       (push '*SsEvts (cons Id Var Prg)) ) )
 
 (de ssEvt (Id)
-   (when (cdr (assoc Id *SsEvts))
-      (let ((@Var . Prg) @)
+   (when (assoc Id *SsEvts)
+      (let ((@Var . Prg) (cdr @))
          (task *HtSock)
          (macro
+            (and @Var (task (close @Var)))
             (task (setq @Var *HtSock)
                (in @
                   (unless (char)
@@ -162,11 +163,12 @@
          (run Prg) ) ) )
 
 (de serverSend (Sock . Prg)
-   (out Sock
-      (ht:Out (bool *Chunked)
-         (prin "data: ")
-         (htPrin Prg 2)
-         (prinl "^J") ) ) )
+   (when Sock
+      (out @
+         (ht:Out (bool *Chunked)
+            (prin "data: ")
+            (htPrin Prg 2)
+            (prinl "^J") ) ) ) )
 
 (de ping (Min)
    (timeout (setq *Timeout (* Min `(* 60 1000))))
@@ -252,6 +254,18 @@
 
 (de <li> (Attr . Prg)
    (tag 'li Attr 2 Prg)
+   (prinl) )
+
+(de <dl> (Attr . Prg)
+   (tag 'dl Attr 2 Prg)
+   (prinl) )
+
+(de <dt> (Attr . Prg)
+   (tag 'dt Attr 2 Prg)
+   (prinl) )
+
+(de <dd> (Attr . Prg)
+   (tag 'dd Attr 2 Prg)
    (prinl) )
 
 (de <href> (Str Url Tar)
@@ -558,8 +572,7 @@
    (<span> 'step
       (use (S1 S2)
          (if (pair X)
-            (let L (memq *ID X)
-               (setq S1 (car (prior L X))  S2 (cadr L)) )
+            (setq S1 (car X)  S2 (cdr X))
             (let
                (Rel (meta *ID X)
                   K
