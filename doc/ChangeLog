@@ -1,4 +1,12 @@
+06jun19
+   Minor tuning
+      lib/gis.js
+   Use 'setExactAndAllowWhileIdle' in 'android~alarm'
+      lib/android.l
+
 05jun19
+   Remove request-'Queue' (Chrome race condition?)
+      lib/form.js
    'Hover' function for '<poi>'
       lib/gis.l
       lib/gis.js
