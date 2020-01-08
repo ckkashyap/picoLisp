@@ -1,4 +1,4 @@
-/* 18sep18abu
+/* 02jan20abu
  * (c) Software Lab. Alexander Burger
  */
 
@@ -38,7 +38,7 @@ static bool Hup;
 static name *Names;
 static char *Config;
 static int CliSock, SrvSock;
-static char Ciphers[] = "ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:AES128-GCM-SHA256:AES128-SHA256:AES128-SHA:DES-CBC3-SHA";
+static char Ciphers[] = "EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH";
 
 static char Head_302[] =
    "HTTP/1.0 302 Found\r\n"
@@ -452,7 +452,7 @@ int main(int ac, char *av[]) {
          giveup("SSL init");
       }
       SSL_CTX_set_options(ctx,
-         SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 |
+         SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 |
          SSL_OP_ALL | SSL_OP_CIPHER_SERVER_PREFERENCE | SSL_OP_NO_COMPRESSION );
       ssl = SSL_new(ctx),  gate = "X-Pil: *Gate=https\r\nX-Pil: *Adr=%s\r\n";
    }
@@ -511,7 +511,7 @@ int main(int ac, char *av[]) {
                if ((q = strpbrk(p, " /?")) && (np = findName(p, q)))
                   port = np->port;
                else
-                  port = ports[0],  q = p;
+                  q = p,  port = (np = findName(p, q))? np->port : ports[0];  // "@"?
             }
             else if (port < 1024) {
                if (np = findName(p, q))

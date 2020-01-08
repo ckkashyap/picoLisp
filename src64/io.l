@@ -1,4 +1,4 @@
-# 25dec18abu
+# 14nov19abu
 # (c) Software Lab. Alexander Burger
 
 # Close file descriptor
@@ -185,8 +185,9 @@
 (code 'waitFileC 0)
    cmp (C II) 1  # 'pid' > 1?
    if gt  # Yes
+      sub S I  # Result buffer
       do
-         cc waitpid((C II) 0 0)  # Wait for pipe process
+         cc waitpid((C II) S 0)  # Wait for pipe process
          nul4  # OK?
       while s  # No
          call errno_A
@@ -197,6 +198,11 @@
             call sighandler0
          end
       loop
+      ld4 (S)  # Result?
+      shl A 4  # Make short number
+      or A CNT
+      ld (At2) A  # Exit status in '@@'
+      add S I  # Drop result
    end
    ret
 
@@ -4108,8 +4114,6 @@
    push (EnvParseX)  # Save old parser status
    push (EnvParseC)
    push (EnvParseEOF)
-   push (Get_A)  # Save 'get' status
-   push (Chr)
    ld E (E TAIL)
    call nameE_E  # Get name
    link
@@ -4117,14 +4121,25 @@
    link
    ld (EnvParseX) E  # Set new parser status
    ld (EnvParseC) 0
+   sub S IV  # InFrame
+   ld (S I) 0  # fd = stdin (dummy)
+   ld (S II) 0  # pid = 0
+   null (InFile)  # Current InFile?
+   if nz  # Yes
+      ld ((InFile) III) (Chr)  # Save Chr in next
+      ld (InFile) 0  # No InFile
+   end
+   ld (Chr) 0
+   ld (S III) (Get_A)  # Save 'get'
+   ld (Get_A) getParse_A  # Set 'get' status
+   ld (S) (EnvInFrames)  # Set link
+   ld (EnvInFrames) S  # Link frame
    ld E 0
    null C  # Token?
    if z  # No
       ld E (hex "5D0A00")  # linefeed, ']', EOF
    end
    ld (EnvParseEOF) E
-   ld (Get_A) getParse_A  # Set 'get' status
-   ld (Chr) 0
    nul B  # Skip?
    if nz  # Yes
       call getParse_A  # Skip first char
@@ -4167,9 +4182,8 @@
       add S I  # Drop set
       pop X
    end
+   call popInFiles
    drop
-   pop (Chr)  # Retrieve 'get' status
-   pop (Get_A)
    pop (EnvParseEOF)  # Restore old parser status
    pop (EnvParseC)
    pop (EnvParseX)
@@ -4190,8 +4204,6 @@
       push (EnvParseX)  # Save old parser status
       push (EnvParseC)
       push (EnvParseEOF)
-      push (Get_A)  # Save 'get' status
-      push (Chr)
       ld E (E TAIL)
       call nameE_E  # Get name
       link
@@ -4199,15 +4211,25 @@
       link
       ld (EnvParseX) E  # Set new parser status
       ld (EnvParseC) 0
-      ld (EnvParseEOF) (hex "2000")  # Blank, EOF
-      ld (Get_A) getParse_A  # Set 'get' status
+      sub S IV  # InFrame
+      ld (S I) 0  # fd = stdin (dummy)
+      ld (S II) 0  # pid = 0
+      null (InFile)  # Current InFile?
+      if nz  # Yes
+         ld ((InFile) III) (Chr)  # Save Chr in next
+         ld (InFile) 0  # No InFile
+      end
       ld (Chr) 0
+      ld (S III) (Get_A)  # Save 'get'
+      ld (Get_A) getParse_A  # Set 'get' status
+      ld (S) (EnvInFrames)  # Set link
+      ld (EnvInFrames) S  # Link frame
+      ld (EnvParseEOF) (hex "2000")  # Blank, EOF
       call getParse_A  # Skip first char
       ld A 1  # Top level
       call readA_E  # Read expression
+      call popInFiles
       drop
-      pop (Chr)  # Retrieve 'get' status
-      pop (Get_A)
       pop (EnvParseEOF)  # Restore old parser status
       pop (EnvParseC)
       pop (EnvParseX)
@@ -5296,6 +5318,7 @@
    call doPrin  # Print arguments
    jmp newline
 
+# (space ['cnt]) -> cnt
 (code 'doSpace 2)
    push X
    ld X E

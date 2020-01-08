@@ -1,4 +1,4 @@
-# 29oct18abu
+# 13dec19abu
 # (c) Software Lab. Alexander Burger
 
 # *PRG *Top *Gui *Btn *Get *Got *Form *Evt *Lock *Spans
@@ -538,7 +538,7 @@
 (dm js> ()
    (cond
       ((: act) (super))
-      ((try (: msg) (: obj) 1)
+      ((try (: msg) (: obj) 1 This)
          (pack "@&+" (ht:Fmt (sesId (mkUrl @)))) )
       (T "@") ) )
 
@@ -546,7 +546,7 @@
    (if (: act)
       (super "Var")
       (<style> (cons 'id (pack "i" *Form "-" (: id)))
-         (if (try (: msg) (: obj) 1)
+         (if (try (: msg) (: obj) 1 This)
             (<tip> "-->" (<href> "@" (mkUrl @)))
             (<span> *Style "@") ) ) ) )
 
@@ -1481,7 +1481,8 @@
    (super (glue (car (: split)) Val) Dn) )
 
 (dm val> ()
-   (mapcar pack
+   (extract
+      '((L) (pack (clip L)))
       (apply split (: split) (chop (super))) ) )
 
 
@@ -1727,7 +1728,7 @@
 
 (dm T @
    (pass super
-      '((S) (or (sub? "://" S) (pack "http://" S))) ) )
+      '((S) (or (sub? "://" S) (pack "https://" S))) ) )
 
 
 (class +MailField +Url +TextField)
@@ -2005,9 +2006,7 @@
                (rollback)
                (off *Lock) ) )
          (tryLock (: home obj)) ) )
-   (when (=: save Exe)
-      (for This (: home gui)
-         (and (isa '+Edit This) (=: save Exe)) ) ) )
+   (=: save Exe) )
 
 (de tryLock (Obj)
    (if (lock Obj)
@@ -2016,6 +2015,9 @@
       (tell)
       (setq *Lock Obj) ) )
 
+(de onDone (Exe)
+   (for This (: gui)
+      (and (isa '+Edit This) (=: save Exe)) ) )
 
 (de editButton (Able Exe)
    (<style> (and (: able) "edit")
@@ -2202,7 +2204,7 @@
 (dm js> ()
    (if (=T (: msg))
       (extra)
-      (if2 (or (: dx) (: lst)) (try (: msg) (: obj) 1)
+      (if2 (or (: dx) (: lst)) (try (: msg) (: obj) 1 This)
          (pack (extra) "&*" (ht:Fmt (sesId "@img/go.png")) "&" (ht:Fmt (sesId (mkUrl @))))
          (pack (extra) "&*" (ht:Fmt (sesId "@img/no.png")) "&")
          (pack (ht:Fmt (nonblank (str> This))) "&+" (ht:Fmt (sesId (mkUrl @))))
@@ -2215,11 +2217,11 @@
          (prin "<table cellspacing=\"0\" cellpadding=\"0\"><td>")
          (extra "Var")
          (prin "</td><td title=\"-->\">")
-         (if (try (: msg) (: obj) 1)
+         (if (try (: msg) (: obj) 1 This)
             (<img> "@img/go.png" 'obj (mkUrl @))
             (<img> "@img/no.png") )
          (prinl "</td></table>") )
-      ((try (: msg) (: obj) 1)
+      ((try (: msg) (: obj) 1 This)
          (showFld (<href> (nonblank (str> This)) (mkUrl @))) )
       (T (extra "Var")) ) )
 
@@ -2360,7 +2362,9 @@
          ((: obj)
             (dbSync)
             (=: obj (new (or (meta (: objTyp) 'Dbf 1) 1) (: objTyp)))
-            (when (: hook)
+            (and
+               (: hook)
+               (nT @)
                (put> (: obj) (: hook) (eval (: objHook))) )
             (put> (: obj) (: objVar) Val)
             (commit 'upd) )
@@ -2457,6 +2461,65 @@
          (link (cons @@ @)) ) ) )
 
 
+# 3D-Chart (list of bags with list of bags)
+(de bagBag (Attr Var H1 Rows Gui Sep H2 Cols Put Get . Prg)
+   (let Len (length Gui)
+      (<grid> 3
+         (<table> Attr NIL H1
+            (put
+               (gui '(+E/R +Chart) (cons Var '(: home obj)) (+ 2 Len)
+                  '((L I)
+                     (when (= I (+ (format (: home radio)) (: ofs)))
+                        (unless (= I (: radio))
+                           (=: radio I)
+                           (set> (cadr (memq This (: home chart)))
+                              (get L (inc (: gf 1))) ) ) )
+                     (mapcar
+                        '((F) (and F (++ L)))
+                        (: gf -1) ) )
+                  '((L D)
+                     (conc
+                        (filter prog2 L (: gf -1))
+                        (nth D (inc (: gf 1))) ) ) )
+               'gf (cons (cnt car Gui) (mapcar car Gui)) )
+            (macro
+               (for R (range 0 (dec Rows))
+                  (<row> NIL
+                     ^ (mapcar cdr Gui)
+                     (gui (inc Len) '(+Able +DelRowButton)
+                        '(nor
+                           (= (row) (: chart 1 radio))
+                           (>= (: chart 1 radio) (length (: chart 1 data))) )
+                        '(=: chart 1 radio NIL) )
+                     (gui (+ 2 Len) '(+BubbleButton) '(=: chart 1 radio NIL))
+                     (if (=0 R)
+                        (gui '(+Rid +Init +Var +Radio) "0" (:: radio) NIL "0")
+                        (gui '(+Rid +Radio) (* R (- -3 Len)) (format R)) ) ) ) )
+            (<row> NIL (scroll Rows T) - -) )
+         (run Sep)
+         (<table> Attr NIL H2
+            (gui '(+Init +Set +Chart) (last (get (: obj) Var 1))
+               '((Lst)
+                  (when (: home able)
+                     (let C (car (prior (memq This (: home chart)) (: home chart)))
+                        (when (+ (format (: home radio)) (; C ofs))
+                           (put!> (: home obj) (; C erVar)
+                              (let L (get (: home obj) (; C erVar))
+                                 (conc
+                                    (cut (dec @) 'L)
+                                    (cons
+                                       (conc
+                                          (make
+                                             (do (; C gf 1)
+                                                (link (and L (pop L))) ) )
+                                          (list Lst) ) )
+                                    (cdr L) ) ) ) ) ) )
+                  Lst )
+               Cols
+               Put
+               Get )
+            (run Prg) ) ) ) )
+
 (====)
 
 # Form object
@@ -2516,7 +2579,7 @@
                (list 'choDlg NIL (lit "Cho") (lit (list (fin "Var") "X"))) )
             "Var" "X"
             (and
-               (atom X)
+               (atom "X")
                (or (get "X" (fin "Var") 'hook) (meta "X" (fin "Var") 'hook))
                (get (: obj) @) ) )
          (run "Prg") ) ) )

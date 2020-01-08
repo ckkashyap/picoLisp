@@ -1,4 +1,4 @@
-# 24dec18abu
+# 05jul19abu
 # (c) Software Lab. Alexander Burger
 
 (code 'redefMsgEC)
@@ -1221,8 +1221,11 @@
    ld X (EnvCls)  # 'cls'
    ld Y (EnvKey)  # 'key'
    null X  # Any?
-   ldnz X (X)  # Yes: First class
-   ldz X (This)  # No: 'This'
+   if nz
+      ld X (X)  # Yes: First class
+   else
+      ld X (This)  # No: 'This'
+   end
    ld X (X)  # Get class definition
    do
       atom (X)  # Method?
@@ -3414,7 +3417,7 @@
 
 # (ipid) -> pid | NIL
 (code 'doIpid 2)
-   ld C (EnvInFrames)  # OutFrames?
+   ld C (EnvInFrames)  # InFrames?
    null C
    if nz
       ld E (C II)  # 'pid'

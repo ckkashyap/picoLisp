@@ -1,4 +1,4 @@
-# 11jul18abu
+# 05jun19abu
 # (c) Software Lab. Alexander Burger
 
 (symbols 'gis 'pico)
@@ -6,13 +6,15 @@
 (push1 '*JS (allow "@lib/gis.js"))
 
 (local) nm
+
 (de nm (Lat Lon)
    (pack
       (round (- Lat 90.0))
       ", "
       (round (- Lon 180.0)) ) )
 
-(local) [lat lon fmt]
+(local) (lat lon fmt)
+
 (de lat (Lat)
    (format (- Lat 90.0) `*Scl) )
 
@@ -25,6 +27,7 @@
 
 # Short distance, assuming flat earth
 (local) distance
+
 (de distance (Lat1 Lon1 Lat2 Lon2)  # [m]
    (let
       (DX (*/ (- Lon2 Lon1) 6378000 pi 180.0)
@@ -33,6 +36,7 @@
 
 # Latitude Field
 (local) +LatField
+
 (class +LatField +Fmt +FixField)
 
 (dm T @
@@ -43,6 +47,7 @@
 
 # Longitude Field
 (local) +LonField
+
 (class +LonField +Fmt +FixField)
 
 (dm T @
@@ -53,6 +58,7 @@
 
 # Clickable position field
 (local) +LatLonField
+
 (class +LatLonField +TextField)
 
 (dm T (Msg . @)
@@ -87,9 +93,9 @@
 
 # OpenLayers / OpenStreetMap
 # (val *Osm) -> ((lat1 . lat2) (lon1 . lon2) . zoom)
-(local) [*Osm <osm> osmStat osmClick osmDrag <poi> <line>]
+(local) (*Osm <osm> osmStat osmClick osmDrag <poi> <line>)
 
-(mapc allow '(osmStat osmClick osmDrag))
+(mapc allow '(osmStat osmClick osmDrag osmHover))
 
 (de <osm> (Lat Lon Zoom Click Upd)
    (<div> '(map (id . map)))
@@ -99,8 +105,8 @@
          Lon (*/ (+ (caadr @) (cdadr @)) 2)
          Zoom (cddr @) ) )
    (with *Top
-      (css "https://openlayers.org/en/v4.2.0/css/ol.css")
-      (javascript "https://openlayers.org/en/v4.2.0/build/ol.js"
+      (css "https://cdn.rawgit.com/openlayers/openlayers.github.io/master/en/v5.3.0/css/ol.css")
+      (javascript "https://cdn.rawgit.com/openlayers/openlayers.github.io/master/en/v5.3.0/build/ol.js"
          "osm('map', " Lat ", " Lon ", " Zoom ", "
          (if2 Click (and Upd (: able)) 2 1 0 0) ")" )
       (=: osmClick Click) ) )
@@ -124,13 +130,20 @@
          (assoc Txt (: osmDrag))
          ((cdr @) Txt Lat Lon) ) ) )
 
-(de <poi> (Lat Lon Img X Y Txt DY Col Url Drag Upd)
+(de osmHover (Txt)
+   (with *Top
+      (and
+         (assoc Txt (: osmHover))
+         ((cdr @) Txt) ) ) )
+
+(de <poi> (Lat Lon Img X Y Txt DY Col Url Drag Upd Hover)
    (with *Top
       (javascript NIL
          "poi(" Lat ", " Lon ", '" (sesId Img) "', " X ", " Y ", '"
          Txt "', " DY ", '" Col "', '" (and Url (sesId @)) "', "
          (if2 (and Drag (: able)) Upd 2 1 0 0) ")" )
-      (and Drag (push (:: osmDrag) (cons Txt @))) ) )
+      (and Drag (push (:: osmDrag) (cons Txt @)))
+      (and Hover (push (:: osmHover) (cons Txt @))) ) )
 
 (de <line> (Col Lat1 Lon1 Lat2 Lon2)
    (with *Top
@@ -138,7 +151,8 @@
          "line('" Col "', " Lat1 ", " Lon1 ", " Lat2 ", " Lon2 ")" ) ) )
 
 # Google Maps
-(local) [google <google>]
+(local) (google <google>)
+
 (de google (Ttl Lat Lon Zoom Tar)
    (<href> Ttl
       (pack "https://www.google.com/maps/@" (fmt Lat "," Lon) "," Zoom "z")

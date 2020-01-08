@@ -1,4 +1,4 @@
-# 15jul17abu
+# 25nov19abu
 # (c) Software Lab. Alexander Burger
 
 ### Destructive primitives ###
@@ -1810,7 +1810,7 @@
    push A  # <L -III> Sign flag
    off E SIGN
    # Calculate buffer size
-   ld A 19  # Decimal length of 'cnt' (60 bit)
+   ld A (+ 19 17)  # Decimal length of 'cnt' (60 bit) plus round up div/18
    ld C E  # Get number
    do
       cnt C  # Last digit?
@@ -1818,8 +1818,7 @@
       add A 20  # Add decimal length of 'digit' (64 bit)
       ld C (C BIG)
    loop
-   add A 17  # Round up
-   ld C 0  # Divide by 18
+   ld C 0  # Divide by 18 (rounded)
    div 18
    shl A 3  # Word count
    sub S A  # Space for incrementor
@@ -2151,6 +2150,7 @@
          call packECX_CX
          ld X (L I)  # Get result
          drop
+         ld (L I) X  # Save it
       end
       pop A  # Get scale
       call symToNumXA_FE  # Convert to number

@@ -1,4 +1,4 @@
-# 22dec18abu
+# 29jul19abu
 # (c) Software Lab. Alexander Burger
 
 # Line editor
@@ -45,7 +45,9 @@
          '((C) (if (wide? (char C)) 2 1))
          "Line" )
       (for C (setq "Line" L)  # Output new line
-         (prin (if (> " " C) "_" C))
+         (if (>= C " ")
+            (prin C)
+            (prin "\^" (char (+ 64 (char C)))) )
          (and (wide? (char C)) (dec 'D))
          (dec 'D) )
       (space D)  # Clear rest of old line
@@ -273,7 +275,6 @@
          ("^U" (chgLine NIL 1))
          ("^V" (insChar (key)))
          ("^E" (and edit (edit '*History)))
-         ("^F" (saveHistory))
          ("^["
             (loop
                (NIL

@@ -36,8 +36,9 @@ href="refS.html#scl">scl</a></code>.
 will be executed when a SIGUSR1 signal (or a SIGUSR2 signal, respectively) is
 sent to the current process. See also <code><a
 href="refA.html#alarm">alarm</a></code>, <code><a
-href="refS.html#sigio">sigio</a></code> and <code><a
-href="refH.html#*Hup">*Hup</a></code>.
+href="refS.html#sigio">sigio</a></code>, <code><a
+href="refH.html#*Hup">*Hup</a></code>, and <code><a
+href="refT.html#*TStp1">*TStp[12]</a></code>.
 
 <pre><code>
 : (de *Sig1 (msg 'SIGUSR1))
@@ -248,11 +249,11 @@ href="refH.html#hash">hash</a></code>.
 
 <pre><code>
 : (seed "init string")
--> 2015582081
+-> -417605464
 : (rand)
--> -706917003
+-> -1061886707
 : (rand)
--> 1224196082
+-> 822065436
 
 : (seed (time))
 -> 128285383
