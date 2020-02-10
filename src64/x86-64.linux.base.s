@@ -1,4 +1,4 @@
-/* 09feb20 */
+/* 10feb20 */
 
    .data
 
@@ -1143,7 +1143,7 @@ Version:
    .quad    .+8
    .quad    34
    .quad    .+8
-   .quad    130
+   .quad    146
    .quad    Nil
 Pico1:
    .quad    pico
@@ -29354,7 +29354,6 @@ muluAE_A_20:
    testb    $0x02, %al
    jz       .2302
    call     boxNum_A
-   mov      %r12, -4(%rax)
    mov      %rax, 4(%r13)
 .2302:
    mov      %rdx, -4(%rax)
@@ -29407,7 +29406,6 @@ muluAE_A_20:
    testb    $0x02, %al
    jz       .2307
    call     boxNum_A
-   mov      %r12, -4(%rax)
    mov      %rax, 4(%r13)
 .2307:
    mov      %rdx, -4(%rax)
