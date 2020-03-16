@@ -1,4 +1,4 @@
-/* 15mar20 */
+/* 16mar20 */
 
    .data
 
@@ -1141,9 +1141,9 @@ GcSymEnd:
 Version:
    .quad    322
    .quad    .+8
-   .quad    34
+   .quad    50
    .quad    .+8
-   .quad    306
+   .quad    258
    .quad    Nil
 Pico1:
    .quad    pico
@@ -31199,7 +31199,7 @@ doRem:
    testb    $8, %bl
    jz       .2517
    andb     $~8, %bl
-   mov      $1, %al
+   inc      %al
 .2517:
    push     %rbp
    mov      %rsp, %rbp
@@ -31300,10 +31300,12 @@ doShift:
    mov      %rax, 8(%rbp)
 .2528:
    decq     -8(%rbp)
-   jz       doShift_90
+   jz       .2529
    call     halfA_A
-   mov      %rax, 8(%rbp)
    jmp      .2528
+.2529:
+   mov      %rax, 8(%rbp)
+   jmp      doShift_90
 .2531:
    cmpq     $-64, -8(%rbp)
    ja       .2532
@@ -31817,8 +31819,8 @@ doSqrt:
    mov      24(%rbp), %rbx
    call     cmpuAE_F
    ja       .2566
-   call     twiceA_A
-   call     twiceA_A
+   call     twiceBigA_A
+   call     twiceBigA_A
    jmp      .2564
 .2566:
    mov      8(%rbp), %rax
@@ -32034,7 +32036,9 @@ doRand:
    add      %rdx, %rbx
    pop      %r14
    pop      %r13
-   jmp      boxE_E
+   shl      $4, %rbx
+   orb      $2, %bl
+   ret
 
    .globl  closeAX
 closeAX:
