@@ -1,4 +1,4 @@
-/* 24mar20 */
+/* 25mar20 */
 
    .data
 
@@ -1143,7 +1143,7 @@ Version:
    .quad    .+8
    .quad    50
    .quad    .+8
-   .quad    258
+   .quad    402
    .quad    Nil
 Pico1:
    .quad    pico
@@ -32036,9 +32036,7 @@ doRand:
    add      %rdx, %rbx
    pop      %r14
    pop      %r13
-   shl      $4, %rbx
-   orb      $2, %bl
-   ret
+   jmp      boxE_E
 
    .globl  closeAX
 closeAX:
