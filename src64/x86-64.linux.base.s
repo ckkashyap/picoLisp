@@ -1,4 +1,4 @@
-/* 02may20 */
+/* 03may20 */
 
    .data
 
@@ -1141,9 +1141,9 @@ GcSymEnd:
 Version:
    .quad    322
    .quad    .+8
-   .quad    66
+   .quad    82
    .quad    .+8
-   .quad    434
+   .quad    50
    .quad    Nil
 Pico1:
    .quad    pico
