@@ -1,4 +1,4 @@
-/* 20jun20 */
+/* 21jun20 */
 
    .data
 
@@ -1143,7 +1143,7 @@ Version:
    .quad    .+8
    .quad    98
    .quad    .+8
-   .quad    322
+   .quad    338
    .quad    Nil
 Pico1:
    .quad    pico
@@ -18169,11 +18169,13 @@ doSymbols:
    testb    $0x08, %bl
    jz       symErrEX
    cmpq     $Nil, (%rbx)
-   jz       .1319
+   jz       doSymbols_10
+   cmp      (%rbx), %rbx
+   jz       doSymbols_10
    testb    $0x0E, (%rbx)
    jnz      symNsErrEX
    jmp      .1320
-.1319:
+doSymbols_10:
    call     consE_C
    movq     $Nil, (%rdx)
    movq     $Nil, 8(%rdx)
