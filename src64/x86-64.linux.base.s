@@ -1,4 +1,4 @@
-/* 03jul20 */
+/* 04jul20 */
 
    .data
 
@@ -1143,7 +1143,7 @@ Version:
    .quad    .+8
    .quad    114
    .quad    .+8
-   .quad    50
+   .quad    66
    .quad    Nil
 Pico1:
    .quad    pico
